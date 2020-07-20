@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Places Project</string>
+    <string name="title_activity_map">MapActivity</string>
+    <string name="google_maps_api">AIzaSyDMA-pjs2w2GMQRB5rJM14vV4heW5s1gk8</string>
+</resources>
