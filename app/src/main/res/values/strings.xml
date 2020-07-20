@@ -2,4 +2,31 @@
     <string name="app_name">Places Project</string>
     <string name="title_activity_map">MapActivity</string>
     <string name="google_maps_api">AIzaSyDMA-pjs2w2GMQRB5rJM14vV4heW5s1gk8</string>
+
+    <string-array name="layers_array">
+        <item>@string/normal</item>
+        <item>@string/hybrid</item>
+        <item>@string/satellite</item>
+        <item>@string/terrain</item>
+        <item>@string/none_map</item>
+    </string-array>
+    <string name="normal">Normal</string>
+    <string name="hybrid">Hybrid</string>
+    <string name="satellite">Satellite</string>
+    <string name="terrain">Terrain</string>
+    <string name="none_map">None</string>
+    <string name="map_not_ready">Map is not ready yet</string>
+    <string-array name="places_array">
+        <item>@string/atm</item>
+        <item>@string/bank</item>
+        <item>@string/movie</item>
+        <item>@string/hospital</item>
+        <item>@string/restaurant</item>
+    </string-array>
+    <string name="atm">Atm</string>
+    <string name="bank">Bank</string>
+    <string name="movie">Movie Theater</string>
+    <string name="hospital">Hospital</string>
+    <string name="restaurant">Restaurant</string>
+    <string name="cafe">Cafe</string>
 </resources>

@@ -15,10 +15,17 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -53,7 +60,10 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.mancj.materialsearchbar.MaterialSearchBar;
 import com.mancj.materialsearchbar.adapter.SuggestionsAdapter;
-import com.skyfishjy.library.RippleBackground;
+import com.vidya.toVisit_vidya_c0778642_android.networking.volley.GetByVolley;
+import com.vidya.toVisit_vidya_c0778642_android.networking.volley.VolleySingleton;
+
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -62,14 +72,24 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import static com.google.android.gms.maps.GoogleMap.MAP_TYPE_HYBRID;
+import static com.google.android.gms.maps.GoogleMap.MAP_TYPE_NONE;
+import static com.google.android.gms.maps.GoogleMap.MAP_TYPE_NORMAL;
+import static com.google.android.gms.maps.GoogleMap.MAP_TYPE_SATELLITE;
+import static com.google.android.gms.maps.GoogleMap.MAP_TYPE_TERRAIN;
+
 public
 class MapActivity extends AppCompatActivity implements
         OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener,
-        GoogleMap.OnMarkerClickListener {
+        GoogleMap.OnMarkerClickListener,
+        AdapterView.OnItemSelectedListener {
 
     private static final String TAG = "MapActivity";
+    private static final int RADIUS = 1500;
     private final float DEFAULT_ZOOM = 15;
+    String placeType;
+    Button btnfindPlaces;
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private PlacesClient placesClient;
@@ -79,9 +99,43 @@ class MapActivity extends AppCompatActivity implements
     private MaterialSearchBar materialSearchBar;
     private View mapView;
     private Button btnFind;
-    private RippleBackground rippleBg;
+    private Marker userMarker;
+    private Spinner mSpinner;
+    private Spinner mPlacesSpinner;
+
+
     private
-    Marker userMarker;
+    void showNearbyPlaces(String url) {
+        /*By Volley Library*/
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
+                                                                    url,
+                                                                    null,
+                                                                    new Response.Listener<JSONObject>() {
+                                                                        @Override
+                                                                        public
+                                                                        void onResponse(JSONObject response) {
+                                                                            GetByVolley.getNearbyPlaces(response, mMap);
+                                                                        }
+                                                                    }, new Response.ErrorListener() {
+            @Override
+            public
+            void onErrorResponse(VolleyError error) {
+
+            }
+        });
+        VolleySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+    }
+
+    private
+    String getPlaceUrl(double latitude, double longitude, String placeType) {
+        StringBuilder googlePlaceUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+        googlePlaceUrl.append("location=" + latitude + "," + longitude);
+        googlePlaceUrl.append(("&radius=" + RADIUS));
+        googlePlaceUrl.append("&type=" + placeType);
+        googlePlaceUrl.append("&key=" + getString(R.string.google_maps_api));
+        Log.d(TAG, "getDirectionUrl: " + googlePlaceUrl);
+        return googlePlaceUrl.toString();
+    }
 
     @Override
     protected
@@ -91,7 +145,12 @@ class MapActivity extends AppCompatActivity implements
 
         materialSearchBar = findViewById(R.id.searchBar);
         btnFind           = findViewById(R.id.btn_find);
-        rippleBg          = findViewById(R.id.ripple_bg);
+        btnfindPlaces = findViewById(R.id.btn_findPlaces);
+
+        mSpinner          = (Spinner) findViewById(R.id.layers_spinner);
+        mPlacesSpinner    = (Spinner) findViewById(R.id.places_spinner);
+        setupSpinners();
+        findPlaces();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -237,6 +296,7 @@ class MapActivity extends AppCompatActivity implements
             @Override
             public
             void onClick(View v) {
+
 //                LatLng currentMarkerLocation = mMap.getCameraPosition().target;
 //                rippleBg.startRippleAnimation();
 //                new Handler().postDelayed(new Runnable() {
@@ -247,11 +307,70 @@ class MapActivity extends AppCompatActivity implements
 //                        finish();
 //                    }
 //                }, 3000);
-
             }
         });
     }
 
+    private
+    void setupSpinners() {
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                this, R.array.layers_array, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinner.setAdapter(adapter);
+        mSpinner.setOnItemSelectedListener(this);
+
+        ArrayAdapter<CharSequence> adapter1 = ArrayAdapter.createFromResource(
+                this, R.array.places_array, android.R.layout.simple_spinner_item);
+        adapter1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mPlacesSpinner.setAdapter(adapter1);
+        mPlacesSpinner.setOnItemSelectedListener(this);
+    }
+
+    private
+    void updateMapType() {
+        if (mMap == null) {
+            return;
+        }
+
+        String layerName = ((String) mSpinner.getSelectedItem());
+        if (layerName.equals(getString(R.string.normal))) {
+            mMap.setMapType(MAP_TYPE_NORMAL);
+        } else if (layerName.equals(getString(R.string.hybrid))) {
+            mMap.setMapType(MAP_TYPE_HYBRID);
+
+
+        } else if (layerName.equals(getString(R.string.satellite))) {
+            mMap.setMapType(MAP_TYPE_SATELLITE);
+        } else if (layerName.equals(getString(R.string.terrain))) {
+            mMap.setMapType(MAP_TYPE_TERRAIN);
+        } else if (layerName.equals(getString(R.string.none_map))) {
+            mMap.setMapType(MAP_TYPE_NONE);
+        } else {
+            Log.i("LDA", "Error setting layer with name " + layerName);
+        }
+    }
+private void findPlaces(){
+    btnfindPlaces.setOnClickListener(new View.OnClickListener(){
+        @Override
+        public
+        void onClick(View v) {
+            String layerName = ((String) mPlacesSpinner.getSelectedItem());
+            if (layerName.equals(getString(R.string.atm))) {
+                placeType = "atm";
+            } else if (layerName.equals(getString(R.string.bank))) {
+                placeType = "bank";
+            } else if (layerName.equals(getString(R.string.movie))) {
+                placeType = "movie_theater";
+            } else if (layerName.equals(getString(R.string.hospital))) {
+                placeType = "hospital";
+            } else if (layerName.equals(getString(R.string.restaurant))) {
+                placeType = "restaurant";
+            }
+            String url = getPlaceUrl(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), placeType);
+            showNearbyPlaces(url);
+        }
+    });
+}
     private
     void markOnMap(LatLng latLng) {
         if (userMarker == null) {
@@ -424,4 +543,16 @@ class MapActivity extends AppCompatActivity implements
         userMarker = marker;
         return false;
     }
+
+    @Override
+    public
+    void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        updateMapType();
+    }
+
+    @Override
+    public
+    void onNothingSelected(AdapterView<?> adapterView) {
+    }
+
 }
