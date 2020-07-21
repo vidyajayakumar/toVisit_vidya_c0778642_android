@@ -14,7 +14,7 @@ import java.util.ArrayList;
 public
 class dbHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "favourites";
     private static final String TABLE_FAVOURITE = "favourite";
 

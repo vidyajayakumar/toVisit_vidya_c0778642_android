@@ -109,6 +109,7 @@ class MapActivity extends AppCompatActivity implements
     private Button btnFind;
     private Button fav;
     private Marker userMarker;
+    private LatLng userlatlng;
     private Spinner mSpinner;
     private Spinner mPlacesSpinner;
     private Location destination;
@@ -388,17 +389,14 @@ class MapActivity extends AppCompatActivity implements
     private
     void setupDirection() {
         if (userMarker != null) {
-            final LatLng latLng = new LatLng(userMarker.getPosition().latitude, userMarker.getPosition().longitude);
-            destination.setLatitude(userMarker.getPosition().latitude);
-            destination.setLongitude(userMarker.getPosition().longitude);
-            Log.i(TAG, "setupDirection: " + userMarker);
+            Log.i(TAG, "setupDirection: " + userMarker.getPosition());
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
-                                                                        getDirectionUrl(latLng), null, new Response.Listener<JSONObject>() {
+                                                                        getDirectionUrl(userlatlng), null, new Response.Listener<JSONObject>() {
                 @Override
                 public
                 void onResponse(JSONObject response) {
-                    GetByVolley.getDirection(response, mMap, destination);// give destination
+                    GetByVolley.getDirection(response, mMap, markerToLocation(userMarker));// give destination
                 }
             }, new Response.ErrorListener() {
                 @Override
@@ -417,7 +415,7 @@ class MapActivity extends AppCompatActivity implements
     String getDirectionUrl(LatLng location) {
         StringBuilder googleDirectionUrl = new StringBuilder("https://maps.googleapis.com/maps/api/directions/json?");
         googleDirectionUrl.append("origin=" + mLastKnownLocation.getLatitude() + "," + mLastKnownLocation.getLongitude());
-        googleDirectionUrl.append(("&destination=" + 13.06 + "," + 77.53));
+        googleDirectionUrl.append(("&destination=" + markerToLocation(userMarker).getLatitude() + "," + markerToLocation(userMarker).getLongitude()));
         googleDirectionUrl.append("&key=" + getString(R.string.google_maps_api));
         Log.d(TAG, "getDirectionUrl: " + googleDirectionUrl);
         return googleDirectionUrl.toString();
@@ -596,7 +594,14 @@ class MapActivity extends AppCompatActivity implements
             return true;
         }
         userMarker = marker;
+        userlatlng = markerToLatLng(marker);
         return false;
+    }
+
+    private
+    LatLng markerToLatLng(Marker marker) {
+        LatLng tmp = new LatLng(marker.getPosition().latitude,marker.getPosition().longitude);
+        return tmp;
     }
 
     @Override
@@ -675,12 +680,11 @@ class MapActivity extends AppCompatActivity implements
 
     @Override
     public
-    void onItemClick(int position) {
+    void OnItemClick(int position) {
         //Todo Do some action here
         Toast.makeText(MapActivity.this, "id: " + position, Toast.LENGTH_LONG).show();
         Log.i(TAG, "onItemClick: id " + position);
         dialog.dismiss();
-
     }
 
     private
@@ -703,10 +707,10 @@ class MapActivity extends AppCompatActivity implements
                     String date    = getDate();
 
                     Log.i(TAG, "onClick: ");
-                    Favourites newFav = new Favourites(address,
-                                                       date,
-                                                       (double)lat,
-                                                       (double)lng,
+                    Favourites newFav = new Favourites("newaddress",
+                                                       "date",
+                                                       32.23423,
+                                                       77.2424242,
                                                        false);
                     Log.i(TAG, "onClick: New Fav added");
                     mDatabase.addFavourites(newFav);

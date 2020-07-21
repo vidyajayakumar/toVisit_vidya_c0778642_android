@@ -19,9 +19,9 @@ class Favourites {
         this.favLng     = favLng;
         this.favVisited = favVisited;
     }
+
     public
     Favourites(String favAddress, String favDate, double favLat, double favLng, boolean favVisited) {
-//        this._id        = _id;
         this.favAddress = favAddress;
         this.favDate    = favDate;
         this.favLat     = favLat;
@@ -33,7 +33,6 @@ class Favourites {
     Favourites(int id, boolean checked) {
         this._id        = id;
         this.favVisited = checked;
-
     }
 
     public

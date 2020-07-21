@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public
 class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.MyViewHolder> implements Filterable {
     private static final String TAG = "recyclerAdapter";
-    private final CustomAdapterClickListener clickListener;
+    private static CustomAdapterClickListener clickListener;
     dbHelper mDatabase;
     private LayoutInflater inflater;
     private Context context;
@@ -91,7 +91,7 @@ class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.MyViewHolder>
                 void onClick(View v) {
                     if (clickListener == null) {
                         int elementId = listFavourites.get(getAdapterPosition()).get_id(); // Get the id of the item on that position
-//                        clickListener.onItemClick( elementId); // we catch the id on the item view then pass it over the interface and then to our activity
+                        clickListener.OnItemClick(elementId); // we catch the id on the item view then pass it over the interface and then to our activity
 
 //                    clickListener.onItemClick(v, (int) v.getTag());
                     Log.i(TAG, "onClick: element "+elementId);}
