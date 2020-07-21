@@ -89,12 +89,13 @@ class MapActivity extends AppCompatActivity implements
         OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMarkerClickListener,
-        AdapterView.OnItemSelectedListener {
+        AdapterView.OnItemSelectedListener,
+        GoogleMap.OnMarkerDragListener {
 
     private static final String TAG = "MapActivity";
     private static final int RADIUS = 1500;
     public static Dialog dialog;
-    private final float DEFAULT_ZOOM = 15;
+    private final float DEFAULT_ZOOM = 12;
     String placeType;
     Button btnfindPlaces;
     Favourites delUp;
@@ -468,7 +469,7 @@ class MapActivity extends AppCompatActivity implements
 
         try {
             addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
-            address   = addresses.get(0).getAddressLine(0);
+            address   = addresses.get(0).getAdminArea() + " : " + addresses.get(0).getAddressLine(0);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -478,7 +479,6 @@ class MapActivity extends AppCompatActivity implements
             address = sdf.format(new Date());
         }
         return address;
-
     }
 
     @SuppressLint("MissingPermission")
@@ -490,6 +490,7 @@ class MapActivity extends AppCompatActivity implements
         mMap.setOnMarkerClickListener(this);
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
+        mMap.setOnMarkerDragListener(this);
 
         if (mapView != null && mapView.findViewById(Integer.parseInt("1")) != null) {
             View                        locationButton = ((View) mapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
@@ -687,6 +688,7 @@ class MapActivity extends AppCompatActivity implements
         }
 
         dialog.show();
+        mMap.clear();
     }
 
     private
@@ -716,6 +718,8 @@ class MapActivity extends AppCompatActivity implements
             public
             void OnItemClick(int id, double lat, double lng) {
                 delUp = new Favourites(id);
+                mMap.clear();
+                userMarker = null;
                 markOnMap(new LatLng(lat, lng));
                 showDelete();
                 dialog.dismiss();
@@ -726,7 +730,7 @@ class MapActivity extends AppCompatActivity implements
 
     private
     String getDate() {
-        SimpleDateFormat sdf  = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault());
+        SimpleDateFormat sdf  = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss a", Locale.getDefault());
         String           date = sdf.format(new Date());
         return date;
     }
@@ -745,7 +749,7 @@ class MapActivity extends AppCompatActivity implements
                         String date    = getDate();
 
                         Favourites newFav = new Favourites(
-                                fdata.get_id(),
+                                delUp.get_id(),
                                 address,
                                 date,
                                 lat,
@@ -754,7 +758,10 @@ class MapActivity extends AppCompatActivity implements
 
                         dbHelper db = new dbHelper(MapActivity.this);
                         db.updateFavourites(newFav);
-                        update = 0;
+                        mMap.clear();
+                        userMarker = null;
+                        showFav(MapActivity.this);
+                        hideDelete();
                     }
 
                 } else {
@@ -774,6 +781,8 @@ class MapActivity extends AppCompatActivity implements
                         db.addFavourites(newFav);
                         Log.i(TAG, "onClick: New Fav added");
                         Toast.makeText(MapActivity.this, "New place added", Toast.LENGTH_SHORT).show();
+                        userMarker = null;
+                        mMap.clear();
                         showFav(MapActivity.this);
                     } else {
                         Toast.makeText(MapActivity.this, "Please select a point to add.", Toast.LENGTH_LONG).show();
@@ -791,7 +800,7 @@ class MapActivity extends AppCompatActivity implements
             void onClick(View view) {
                 dbHelper db = new dbHelper(MapActivity.this);
                 db.deleteFavourite(delUp.get_id());
-                userMarker=null;
+                userMarker = null;
                 mMap.clear();
                 hideDelete();
             }
@@ -810,5 +819,26 @@ class MapActivity extends AppCompatActivity implements
         btnDel.setVisibility(View.VISIBLE);
         btnAdd.setText("Update Place");
         update = 1;
+    }
+
+    @Override
+    public
+    void onMarkerDragStart(Marker marker) {
+
+    }
+
+    @Override
+    public
+    void onMarkerDrag(Marker marker) {
+
+    }
+
+    @Override
+    public
+    void onMarkerDragEnd(Marker marker) {
+        mMap.clear();
+        userlatlng = markerToLatLng(marker);
+        userMarker = null;
+        markOnMap(userlatlng);
     }
 }

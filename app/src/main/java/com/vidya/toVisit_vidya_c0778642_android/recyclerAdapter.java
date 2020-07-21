@@ -55,6 +55,7 @@ class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.MyViewHolder>
         final Favourites favourites = listFavourites.get(position);
         holder.address.setText(favourites.getFavAddress());
         holder.visited.setChecked(favourites.isFavVisited());
+        holder.date.setText(favourites.getFavDate());
         //TODO add smth here
 
         holder.visited.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -82,19 +83,23 @@ class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.MyViewHolder>
     public
     interface CustomAdapterClickListener {
         void OnItemClick(int elementId);
-        void OnItemClick(int id, double lat,double lng);
+
+        void OnItemClick(int id, double lat, double lng);
     }
 
     class MyViewHolder extends RecyclerView.ViewHolder {
 
         TextView address;
         CheckBox visited;
+        TextView date;
 
         public
         MyViewHolder(View itemView) {
             super(itemView);
             address = (TextView) itemView.findViewById(R.id.tv_name);
             visited = (CheckBox) itemView.findViewById(R.id.rb_visit);
+            date    = (TextView) itemView.findViewById(R.id.tv_date);
+
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -102,8 +107,7 @@ class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.MyViewHolder>
                 void onClick(View v) {
                     if (clickListener != null) {
                         final int elementId = listFavourites.get(getAdapterPosition()).get_id(); // Get the id of the item on that position
-                        clickListener.OnItemClick(listFavourites.get(getAdapterPosition()).get_id(),listFavourites.get(getAdapterPosition()).getFavLat(),listFavourites.get(getAdapterPosition()).getFavLng()); // we catch the id on the item view then pass it over the interface and then to our activity
-                        //                    clickListener.OnItemClick(v, (int) v.getTag());
+                        clickListener.OnItemClick(listFavourites.get(getAdapterPosition()).get_id(), listFavourites.get(getAdapterPosition()).getFavLat(), listFavourites.get(getAdapterPosition()).getFavLng()); // we catch the id on the item view then pass it over the interface and then to our activity
                         Log.i(TAG, "onClick: element " + elementId);
                     }
                     MapActivity.dialog.dismiss();
