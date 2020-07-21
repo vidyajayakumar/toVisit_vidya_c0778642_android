@@ -760,6 +760,7 @@ class MapActivity extends AppCompatActivity implements
                         db.updateFavourites(newFav);
                         mMap.clear();
                         userMarker = null;
+                        Toast.makeText(MapActivity.this, "Place updated", Toast.LENGTH_SHORT).show();
                         showFav(MapActivity.this);
                         hideDelete();
                     }
