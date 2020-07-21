@@ -97,6 +97,7 @@ class MapActivity extends AppCompatActivity implements
     private final float DEFAULT_ZOOM = 15;
     String placeType;
     Button btnfindPlaces;
+    Favourites delUp;
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private PlacesClient placesClient;
@@ -119,6 +120,7 @@ class MapActivity extends AppCompatActivity implements
     private Favourites fdata;
     private Location location;
     private Button btnDel;
+    private int update;
 
     @Override
     protected
@@ -141,6 +143,7 @@ class MapActivity extends AppCompatActivity implements
         favorites();
         addFav();
         hideDelete();
+        delFav();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -337,10 +340,10 @@ class MapActivity extends AppCompatActivity implements
             public
             void onClick(View v) {
                 Location loc;
-                if(userMarker!=null){
+                if (userMarker != null) {
                     loc = markerToLocation(userMarker);
-                }else {
-                    loc =mLastKnownLocation;
+                } else {
+                    loc = mLastKnownLocation;
                 }
                 String layerName = ((String) mPlacesSpinner.getSelectedItem());
                 if (layerName.equals(getString(R.string.cafe))) {
@@ -452,7 +455,7 @@ class MapActivity extends AppCompatActivity implements
             userMarker.setTag("UserMarker");
             userMarker.setDraggable(true);
             userMarker.showInfoWindow();
-//            showFavoriteOption();
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM));
         }
     }
 
@@ -601,6 +604,7 @@ class MapActivity extends AppCompatActivity implements
         userMarker = null;
         userlatlng = latLng;
         markOnMap(latLng);
+        hideDelete();
         Log.i(TAG, "onMapLongClick: userMarker:    " + userMarker.getPosition());
     }
 
@@ -612,6 +616,7 @@ class MapActivity extends AppCompatActivity implements
         if (marker.equals(userMarker)) {
             userMarker = null;
             mMap.clear();
+            hideDelete();
             return true;
         }
         userMarker = marker;
@@ -675,20 +680,13 @@ class MapActivity extends AppCompatActivity implements
             favView.setVisibility(View.VISIBLE);
             mAdapter = new recyclerAdapter(this, allFav, null);
             favView.setAdapter(mAdapter);
+            adapterListener();
         } else {
             favView.setVisibility(View.GONE);
             Toast.makeText(this, "There is no Favourites in the database. Start adding now", Toast.LENGTH_LONG).show();
         }
 
-//        favView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public
-//            void onClick(View v) {
-//                Toast.makeText(MapActivity.this, "sdd ", Toast.LENGTH_LONG).show();
-//            }
-//        });
         dialog.show();
-        adapterListener();
     }
 
     private
@@ -703,11 +701,6 @@ class MapActivity extends AppCompatActivity implements
     private
     void adapterListener() {
         mAdapter.setClickListener(new recyclerAdapter.CustomAdapterClickListener() {
-            @Override
-            public
-            void OnItemClick(View v, int position) {
-
-            }
 
             @Override
             public
@@ -718,9 +711,17 @@ class MapActivity extends AppCompatActivity implements
                 showDelete();
                 dialog.dismiss();
             }
+
+            @Override
+            public
+            void OnItemClick(int id, double lat, double lng) {
+                delUp = new Favourites(id);
+                markOnMap(new LatLng(lat, lng));
+                showDelete();
+                dialog.dismiss();
+                Log.i(TAG, "onItemClick: id " + id + " Latlng " + new LatLng(lat, lng));
+            }
         });
-
-
     }
 
     private
@@ -736,26 +737,63 @@ class MapActivity extends AppCompatActivity implements
             @Override
             public
             void onClick(View view) {
-                if (userMarker != null) {
-                    String address = getAddress(userlatlng);
-                    double lat     = markerToLatLng(userMarker).latitude;
-                    double lng     = markerToLatLng(userMarker).longitude;
-                    String date    = getDate();
+                if (update == 1) {
+                    if (userMarker != null) {
+                        String address = getAddress(userlatlng);
+                        double lat     = markerToLatLng(userMarker).latitude;
+                        double lng     = markerToLatLng(userMarker).longitude;
+                        String date    = getDate();
 
-                    Favourites newFav = new Favourites(address,
-                                                       date,
-                                                       lat,
-                                                       lng,
-                                                       false);
+                        Favourites newFav = new Favourites(
+                                fdata.get_id(),
+                                address,
+                                date,
+                                lat,
+                                lng,
+                                false);
 
-                    dbHelper db = new dbHelper(MapActivity.this);
-                    db.addFavourites(newFav);
-                    Log.i(TAG, "onClick: New Fav added");
-                    Toast.makeText(MapActivity.this, "New place added", Toast.LENGTH_SHORT).show();
-                    dialog.show();
+                        dbHelper db = new dbHelper(MapActivity.this);
+                        db.updateFavourites(newFav);
+                        update = 0;
+                    }
+
                 } else {
-                    Toast.makeText(MapActivity.this, "Please select a point to add.", Toast.LENGTH_LONG).show();
+                    if (userMarker != null) {
+                        String address = getAddress(userlatlng);
+                        double lat     = markerToLatLng(userMarker).latitude;
+                        double lng     = markerToLatLng(userMarker).longitude;
+                        String date    = getDate();
+
+                        Favourites newFav = new Favourites(address,
+                                                           date,
+                                                           lat,
+                                                           lng,
+                                                           false);
+
+                        dbHelper db = new dbHelper(MapActivity.this);
+                        db.addFavourites(newFav);
+                        Log.i(TAG, "onClick: New Fav added");
+                        Toast.makeText(MapActivity.this, "New place added", Toast.LENGTH_SHORT).show();
+                        showFav(MapActivity.this);
+                    } else {
+                        Toast.makeText(MapActivity.this, "Please select a point to add.", Toast.LENGTH_LONG).show();
+                    }
                 }
+            }
+        });
+    }
+
+    private
+    void delFav() {
+        btnDel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public
+            void onClick(View view) {
+                dbHelper db = new dbHelper(MapActivity.this);
+                db.deleteFavourite(delUp.get_id());
+                userMarker=null;
+                mMap.clear();
+                hideDelete();
             }
         });
     }
@@ -764,12 +802,13 @@ class MapActivity extends AppCompatActivity implements
     void hideDelete() {
         btnDel.setVisibility(View.GONE);
         btnAdd.setText("Add Place");
+        update = 0;
     }
 
     private
     void showDelete() {
         btnDel.setVisibility(View.VISIBLE);
         btnAdd.setText("Update Place");
-
+        update = 1;
     }
 }

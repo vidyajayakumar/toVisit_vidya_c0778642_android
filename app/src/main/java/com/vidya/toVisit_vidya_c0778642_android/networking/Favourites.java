@@ -11,6 +11,11 @@ class Favourites {
     private boolean favVisited;
 
     public
+    Favourites(int _id) {
+        this._id = _id;
+    }
+
+    public
     Favourites(int _id, String favAddress, String favDate, double favLat, double favLng, boolean favVisited) {
         this._id        = _id;
         this.favAddress = favAddress;
@@ -28,6 +33,8 @@ class Favourites {
         this.favLng     = favLng;
         this.favVisited = favVisited;
     }
+    public
+    Favourites() {}
 
     public
     Favourites(int id, boolean checked) {

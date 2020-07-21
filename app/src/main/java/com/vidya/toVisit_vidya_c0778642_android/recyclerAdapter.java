@@ -81,9 +81,8 @@ class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.MyViewHolder>
 
     public
     interface CustomAdapterClickListener {
-        void OnItemClick(View v, int position);
-
         void OnItemClick(int elementId);
+        void OnItemClick(int id, double lat,double lng);
     }
 
     class MyViewHolder extends RecyclerView.ViewHolder {
@@ -103,7 +102,7 @@ class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.MyViewHolder>
                 void onClick(View v) {
                     if (clickListener != null) {
                         final int elementId = listFavourites.get(getAdapterPosition()).get_id(); // Get the id of the item on that position
-                        clickListener.OnItemClick(elementId); // we catch the id on the item view then pass it over the interface and then to our activity
+                        clickListener.OnItemClick(listFavourites.get(getAdapterPosition()).get_id(),listFavourites.get(getAdapterPosition()).getFavLat(),listFavourites.get(getAdapterPosition()).getFavLng()); // we catch the id on the item view then pass it over the interface and then to our activity
                         //                    clickListener.OnItemClick(v, (int) v.getTag());
                         Log.i(TAG, "onClick: element " + elementId);
                     }
