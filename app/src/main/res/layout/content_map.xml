@@ -47,10 +47,56 @@
         app:mt_speechMode="false" />
 
     <LinearLayout
+        android:id="@+id/v_curd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="16dp"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_fav_dial"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:background="#DAA520"
+            android:padding="5dp"
+            android:text="Favoutites"
+            android:textColor="#FFF"
+            android:textSize="12sp"/>
+
+        <Button
+            android:id="@+id/add_fav"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:background="@color/colorPrimaryDark"
+            android:padding="5dp"
+            android:text="Add to Favoutites"
+            android:textColor="#FFF"
+            android:textSize="12sp"/>
+
+        <Button
+            android:id="@+id/del_fav"
+            android:layout_below="@+id/add_fav"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#F00"
+            android:padding="5dp"
+            android:text="Delete"
+            android:textColor="#FFF"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@id/map"
+        android:layout_alignParentLeft="true"
         android:layout_centerHorizontal="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
         android:layout_marginBottom="16dp"
         android:background="#D0FFFFFF"
         android:orientation="vertical"
@@ -59,47 +105,59 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:padding="4dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="0"
-                android:text="Map style" />
+                android:text="Map style"
+                android:textColor="@color/quantum_black_text" />
 
             <Spinner
                 android:id="@+id/layers_spinner"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:textColor="@color/colorPrimaryDark" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
             android:orientation="horizontal">
 
             <Spinner
                 android:id="@+id/places_spinner"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textColor="@color/colorPrimaryDark" />
 
             <Button
                 android:id="@+id/btn_findPlaces"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="find places" />
+                android:background="@color/colorPrimary"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:text="Find Places"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <Button
             android:id="@+id/btn_find"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_margin="16dp"
             android:background="@color/colorPrimary"
             android:text="Find Direction"
+            android:textAllCaps="false"
             android:textColor="#FFFFFF"
+            android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
 

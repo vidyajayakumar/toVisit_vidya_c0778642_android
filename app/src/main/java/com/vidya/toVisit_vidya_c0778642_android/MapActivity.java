@@ -1,19 +1,24 @@
 package com.vidya.toVisit_vidya_c0778642_android;
 
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -60,6 +65,7 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.mancj.materialsearchbar.MaterialSearchBar;
 import com.mancj.materialsearchbar.adapter.SuggestionsAdapter;
+import com.vidya.toVisit_vidya_c0778642_android.networking.Favourites;
 import com.vidya.toVisit_vidya_c0778642_android.networking.volley.GetByVolley;
 import com.vidya.toVisit_vidya_c0778642_android.networking.volley.VolleySingleton;
 
@@ -83,10 +89,12 @@ class MapActivity extends AppCompatActivity implements
         OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMarkerClickListener,
-        AdapterView.OnItemSelectedListener {
+        AdapterView.OnItemSelectedListener,
+        CustomAdapterClickListener {
 
     private static final String TAG = "MapActivity";
     private static final int RADIUS = 1500;
+    public static Dialog dialog;
     private final float DEFAULT_ZOOM = 15;
     String placeType;
     Button btnfindPlaces;
@@ -99,9 +107,17 @@ class MapActivity extends AppCompatActivity implements
     private MaterialSearchBar materialSearchBar;
     private View mapView;
     private Button btnFind;
+    private Button fav;
     private Marker userMarker;
     private Spinner mSpinner;
     private Spinner mPlacesSpinner;
+    private Location destination;
+    private dbHelper mDatabase;
+    private ArrayList<Favourites> allFav = new ArrayList<>();
+    private recyclerAdapter mAdapter;
+    private Button btnAdd;
+    private Favourites fdata;
+    private Location location;
 
     @Override
     protected
@@ -112,11 +128,15 @@ class MapActivity extends AppCompatActivity implements
         materialSearchBar = findViewById(R.id.searchBar);
         btnFind           = findViewById(R.id.btn_find);
         btnfindPlaces     = findViewById(R.id.btn_findPlaces);
+        fav               = findViewById(R.id.btn_fav_dial);
+        btnAdd            = findViewById(R.id.add_fav);
 
         mSpinner       = (Spinner) findViewById(R.id.layers_spinner);
         mPlacesSpinner = (Spinner) findViewById(R.id.places_spinner);
         setupSpinners();
         findPlaces();
+        favorites();
+        addFav();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -231,7 +251,7 @@ class MapActivity extends AppCompatActivity implements
                         Log.i("mytag", "Place found: " + place.getName());
                         LatLng latLngOfPlace = place.getLatLng();
                         if (latLngOfPlace != null) {
-
+                            userMarker = null;
                             markOnMap(latLngOfPlace);
                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLngOfPlace, DEFAULT_ZOOM));
                         }
@@ -369,13 +389,16 @@ class MapActivity extends AppCompatActivity implements
     void setupDirection() {
         if (userMarker != null) {
             final LatLng latLng = new LatLng(userMarker.getPosition().latitude, userMarker.getPosition().longitude);
+            destination.setLatitude(userMarker.getPosition().latitude);
+            destination.setLongitude(userMarker.getPosition().longitude);
+            Log.i(TAG, "setupDirection: " + userMarker);
 
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
                                                                         getDirectionUrl(latLng), null, new Response.Listener<JSONObject>() {
                 @Override
                 public
                 void onResponse(JSONObject response) {
-                    GetByVolley.getDirection(response, mMap, mLastKnownLocation);// give destination
+                    GetByVolley.getDirection(response, mMap, destination);// give destination
                 }
             }, new Response.ErrorListener() {
                 @Override
@@ -559,6 +582,7 @@ class MapActivity extends AppCompatActivity implements
         mMap.clear();
         userMarker = null;
         markOnMap(latLng);
+        Log.i(TAG, "onMapLongClick: userMarker:    " + userMarker.getPosition());
     }
 
     @Override
@@ -585,5 +609,114 @@ class MapActivity extends AppCompatActivity implements
     public
     void onNothingSelected(AdapterView<?> adapterView) {
     }
+
+    private
+    void favorites() {
+        fav.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public
+            void onClick(View view) {
+                showFav(MapActivity.this);
+            }
+        });
+    }
+
+    private
+    void showFav(MapActivity mapActivity) {
+        dialog = new Dialog(mapActivity);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(false);
+        dialog.setContentView(R.layout.dialog_fav_recycler);
+
+        Button btndialog = (Button) dialog.findViewById(R.id.btndialog);
+        btndialog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public
+            void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        RecyclerView        favView             = dialog.findViewById(R.id.recycler);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        favView.setLayoutManager(linearLayoutManager);
+        favView.setHasFixedSize(true);
+
+        mDatabase = new dbHelper(this);
+        allFav    = mDatabase.listFavourites();
+
+        if (allFav.size() > 0) {
+            favView.setVisibility(View.VISIBLE);
+            mAdapter = new recyclerAdapter(this, allFav, null);
+            favView.setAdapter(mAdapter);
+        } else {
+            favView.setVisibility(View.GONE);
+            Toast.makeText(this, "There is no Favourites in the database. Start adding now", Toast.LENGTH_LONG).show();
+        }
+
+        favView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public
+            void onClick(View v) {
+                Toast.makeText(MapActivity.this, "sdd ", Toast.LENGTH_LONG).show();
+            }
+        });
+        dialog.show();
+    }
+
+    private
+    Location markerToLocation(Marker marker) {
+        LatLng position = marker.getPosition();
+        location = new Location(LocationManager.GPS_PROVIDER);
+        location.setLatitude(position.latitude);
+        location.setLongitude(position.longitude);
+        return location;
+    }
+
+    @Override
+    public
+    void onItemClick(int position) {
+        //Todo Do some action here
+        Toast.makeText(MapActivity.this, "id: " + position, Toast.LENGTH_LONG).show();
+        Log.i(TAG, "onItemClick: id " + position);
+        dialog.dismiss();
+
+    }
+
+    private
+    String getDate() {
+        SimpleDateFormat sdf  = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault());
+        String           date = sdf.format(new Date());
+        return date;
+    }
+
+    private
+    void addFav() {
+        btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public
+            void onClick(View view) {
+                if (userMarker != null) {
+                    String address = getAddress(new LatLng(userMarker.getPosition().latitude, userMarker.getPosition().longitude));
+                    double lat     = markerToLocation(userMarker).getLatitude();
+                    double lng     = markerToLocation(userMarker).getLongitude();
+                    String date    = getDate();
+
+                    Log.i(TAG, "onClick: ");
+                    Favourites newFav = new Favourites(address,
+                                                       date,
+                                                       (double)lat,
+                                                       (double)lng,
+                                                       false);
+                    Log.i(TAG, "onClick: New Fav added");
+                    mDatabase.addFavourites(newFav);
+                }else {
+                    Toast.makeText(MapActivity.this,"Please select a point to add." , Toast.LENGTH_LONG).show();
+
+                }
+            }
+        });
+    }
+
 
 }

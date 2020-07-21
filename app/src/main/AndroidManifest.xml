@@ -14,12 +14,13 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning"
         tools:replace="android:allowBackup">
+        <activity android:name=".FavActivity"></activity>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_api" />
 
-        <activity android:name="com.vidya.toVisit_vidya_c0778642_android.PermissionsActivity">
+        <activity android:name=".PermissionsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -27,13 +28,9 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.vidya.toVisit_vidya_c0778642_android.MapActivity"
+            android:name=".MapActivity"
             android:label="@string/title_activity_map"
-            android:theme="@style/AppTheme.NoActionBar">
-
-
-        </activity>
-<!--        <activity android:name=".MainActivity" />-->
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>
