@@ -22,6 +22,7 @@
         <item>@string/movie</item>
         <item>@string/hospital</item>
         <item>@string/restaurant</item>
+        <item>@string/cafe</item>
     </string-array>
     <string name="atm">Atm</string>
     <string name="bank">Bank</string>

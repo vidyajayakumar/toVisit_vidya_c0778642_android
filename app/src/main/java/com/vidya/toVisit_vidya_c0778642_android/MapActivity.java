@@ -103,40 +103,6 @@ class MapActivity extends AppCompatActivity implements
     private Spinner mSpinner;
     private Spinner mPlacesSpinner;
 
-
-    private
-    void showNearbyPlaces(String url) {
-        /*By Volley Library*/
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
-                                                                    url,
-                                                                    null,
-                                                                    new Response.Listener<JSONObject>() {
-                                                                        @Override
-                                                                        public
-                                                                        void onResponse(JSONObject response) {
-                                                                            GetByVolley.getNearbyPlaces(response, mMap);
-                                                                        }
-                                                                    }, new Response.ErrorListener() {
-            @Override
-            public
-            void onErrorResponse(VolleyError error) {
-
-            }
-        });
-        VolleySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
-    }
-
-    private
-    String getPlaceUrl(double latitude, double longitude, String placeType) {
-        StringBuilder googlePlaceUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
-        googlePlaceUrl.append("location=" + latitude + "," + longitude);
-        googlePlaceUrl.append(("&radius=" + RADIUS));
-        googlePlaceUrl.append("&type=" + placeType);
-        googlePlaceUrl.append("&key=" + getString(R.string.google_maps_api));
-        Log.d(TAG, "getDirectionUrl: " + googlePlaceUrl);
-        return googlePlaceUrl.toString();
-    }
-
     @Override
     protected
     void onCreate(Bundle savedInstanceState) {
@@ -145,10 +111,10 @@ class MapActivity extends AppCompatActivity implements
 
         materialSearchBar = findViewById(R.id.searchBar);
         btnFind           = findViewById(R.id.btn_find);
-        btnfindPlaces = findViewById(R.id.btn_findPlaces);
+        btnfindPlaces     = findViewById(R.id.btn_findPlaces);
 
-        mSpinner          = (Spinner) findViewById(R.id.layers_spinner);
-        mPlacesSpinner    = (Spinner) findViewById(R.id.places_spinner);
+        mSpinner       = (Spinner) findViewById(R.id.layers_spinner);
+        mPlacesSpinner = (Spinner) findViewById(R.id.places_spinner);
         setupSpinners();
         findPlaces();
 
@@ -296,17 +262,7 @@ class MapActivity extends AppCompatActivity implements
             @Override
             public
             void onClick(View v) {
-
-//                LatLng currentMarkerLocation = mMap.getCameraPosition().target;
-//                rippleBg.startRippleAnimation();
-//                new Handler().postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        rippleBg.stopRippleAnimation();
-//                        startActivity(new Intent(MapActivity.this, MapActivity.class));
-//                        finish();
-//                    }
-//                }, 3000);
+                setupDirection();
             }
         });
     }
@@ -349,28 +305,101 @@ class MapActivity extends AppCompatActivity implements
             Log.i("LDA", "Error setting layer with name " + layerName);
         }
     }
-private void findPlaces(){
-    btnfindPlaces.setOnClickListener(new View.OnClickListener(){
-        @Override
-        public
-        void onClick(View v) {
-            String layerName = ((String) mPlacesSpinner.getSelectedItem());
-            if (layerName.equals(getString(R.string.atm))) {
-                placeType = "atm";
-            } else if (layerName.equals(getString(R.string.bank))) {
-                placeType = "bank";
-            } else if (layerName.equals(getString(R.string.movie))) {
-                placeType = "movie_theater";
-            } else if (layerName.equals(getString(R.string.hospital))) {
-                placeType = "hospital";
-            } else if (layerName.equals(getString(R.string.restaurant))) {
-                placeType = "restaurant";
+
+    private
+    void findPlaces() {
+        btnfindPlaces.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public
+            void onClick(View v) {
+                String layerName = ((String) mPlacesSpinner.getSelectedItem());
+                if (layerName.equals(getString(R.string.cafe))) {
+                    placeType = "cafe";
+                } else if (layerName.equals(getString(R.string.atm))) {
+                    placeType = "atm";
+                } else if (layerName.equals(getString(R.string.bank))) {
+                    placeType = "bank";
+                } else if (layerName.equals(getString(R.string.movie))) {
+                    placeType = "movie_theater";
+                } else if (layerName.equals(getString(R.string.hospital))) {
+                    placeType = "hospital";
+                } else if (layerName.equals(getString(R.string.restaurant))) {
+                    placeType = "restaurant";
+                }
+                String url = getPlaceUrl(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), placeType);
+                showNearbyPlaces(url);
             }
-            String url = getPlaceUrl(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), placeType);
-            showNearbyPlaces(url);
+        });
+    }
+
+    private
+    void showNearbyPlaces(String url) {
+        /*By Volley Library*/
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
+                                                                    url,
+                                                                    null,
+                                                                    new Response.Listener<JSONObject>() {
+                                                                        @Override
+                                                                        public
+                                                                        void onResponse(JSONObject response) {
+                                                                            GetByVolley.getNearbyPlaces(response, mMap);
+                                                                        }
+                                                                    }, new Response.ErrorListener() {
+            @Override
+            public
+            void onErrorResponse(VolleyError error) {
+
+            }
+        });
+        VolleySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+    }
+
+    private
+    String getPlaceUrl(double latitude, double longitude, String placeType) {
+        StringBuilder googlePlaceUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+        googlePlaceUrl.append("location=" + latitude + "," + longitude);
+        googlePlaceUrl.append(("&radius=" + RADIUS));
+        googlePlaceUrl.append("&type=" + placeType);
+        googlePlaceUrl.append("&key=" + getString(R.string.google_maps_api));
+        Log.d(TAG, "getDirectionUrl: " + googlePlaceUrl);
+        return googlePlaceUrl.toString();
+    }
+
+    private
+    void setupDirection() {
+        if (userMarker != null) {
+            final LatLng latLng = new LatLng(userMarker.getPosition().latitude, userMarker.getPosition().longitude);
+
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
+                                                                        getDirectionUrl(latLng), null, new Response.Listener<JSONObject>() {
+                @Override
+                public
+                void onResponse(JSONObject response) {
+                    GetByVolley.getDirection(response, mMap, mLastKnownLocation);// give destination
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public
+                void onErrorResponse(VolleyError error) {
+
+                }
+            });
+            VolleySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+        } else {
+            Toast.makeText(MapActivity.this, "Please choose a destination", Toast.LENGTH_SHORT).show();
         }
-    });
-}
+    }
+
+    private
+    String getDirectionUrl(LatLng location) {
+        StringBuilder googleDirectionUrl = new StringBuilder("https://maps.googleapis.com/maps/api/directions/json?");
+        googleDirectionUrl.append("origin=" + mLastKnownLocation.getLatitude() + "," + mLastKnownLocation.getLongitude());
+        googleDirectionUrl.append(("&destination=" + 13.06 + "," + 77.53));
+        googleDirectionUrl.append("&key=" + getString(R.string.google_maps_api));
+        Log.d(TAG, "getDirectionUrl: " + googleDirectionUrl);
+        return googleDirectionUrl.toString();
+    }
+
     private
     void markOnMap(LatLng latLng) {
         if (userMarker == null) {
@@ -527,6 +556,8 @@ private void findPlaces(){
     @Override
     public
     void onMapLongClick(LatLng latLng) {
+        mMap.clear();
+        userMarker = null;
         markOnMap(latLng);
     }
 
