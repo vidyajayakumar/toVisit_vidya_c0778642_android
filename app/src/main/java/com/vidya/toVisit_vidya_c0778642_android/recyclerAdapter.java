@@ -36,6 +36,11 @@ class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.MyViewHolder>
         mDatabase           = new dbHelper(context);
     }
 
+    public
+    void setClickListener(CustomAdapterClickListener clickListener) {
+        recyclerAdapter.clickListener = clickListener;
+    }
+
     @Override
     public
     recyclerAdapter.MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -74,6 +79,13 @@ class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.MyViewHolder>
         return null;
     }
 
+    public
+    interface CustomAdapterClickListener {
+        void OnItemClick(View v, int position);
+
+        void OnItemClick(int elementId);
+    }
+
     class MyViewHolder extends RecyclerView.ViewHolder {
 
         TextView address;
@@ -82,19 +94,19 @@ class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.MyViewHolder>
         public
         MyViewHolder(View itemView) {
             super(itemView);
-            address   = (TextView) itemView.findViewById(R.id.tv_name);
-            visited   = (CheckBox) itemView.findViewById(R.id.rb_visit);
+            address = (TextView) itemView.findViewById(R.id.tv_name);
+            visited = (CheckBox) itemView.findViewById(R.id.rb_visit);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public
                 void onClick(View v) {
-                    if (clickListener == null) {
-                        int elementId = listFavourites.get(getAdapterPosition()).get_id(); // Get the id of the item on that position
+                    if (clickListener != null) {
+                        final int elementId = listFavourites.get(getAdapterPosition()).get_id(); // Get the id of the item on that position
                         clickListener.OnItemClick(elementId); // we catch the id on the item view then pass it over the interface and then to our activity
-
-//                    clickListener.onItemClick(v, (int) v.getTag());
-                    Log.i(TAG, "onClick: element "+elementId);}
+                        //                    clickListener.OnItemClick(v, (int) v.getTag());
+                        Log.i(TAG, "onClick: element " + elementId);
+                    }
                     MapActivity.dialog.dismiss();
                 }
             });

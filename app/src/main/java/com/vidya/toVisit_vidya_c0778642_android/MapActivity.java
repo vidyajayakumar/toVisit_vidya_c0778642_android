@@ -89,8 +89,7 @@ class MapActivity extends AppCompatActivity implements
         OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMarkerClickListener,
-        AdapterView.OnItemSelectedListener,
-        CustomAdapterClickListener {
+        AdapterView.OnItemSelectedListener {
 
     private static final String TAG = "MapActivity";
     private static final int RADIUS = 1500;
@@ -119,6 +118,7 @@ class MapActivity extends AppCompatActivity implements
     private Button btnAdd;
     private Favourites fdata;
     private Location location;
+    private Button btnDel;
 
     @Override
     protected
@@ -131,6 +131,8 @@ class MapActivity extends AppCompatActivity implements
         btnfindPlaces     = findViewById(R.id.btn_findPlaces);
         fav               = findViewById(R.id.btn_fav_dial);
         btnAdd            = findViewById(R.id.add_fav);
+        btnDel            = findViewById(R.id.del_fav);
+
 
         mSpinner       = (Spinner) findViewById(R.id.layers_spinner);
         mPlacesSpinner = (Spinner) findViewById(R.id.places_spinner);
@@ -138,6 +140,7 @@ class MapActivity extends AppCompatActivity implements
         findPlaces();
         favorites();
         addFav();
+        hideDelete();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -333,6 +336,12 @@ class MapActivity extends AppCompatActivity implements
             @Override
             public
             void onClick(View v) {
+                Location loc;
+                if(userMarker!=null){
+                    loc = markerToLocation(userMarker);
+                }else {
+                    loc =mLastKnownLocation;
+                }
                 String layerName = ((String) mPlacesSpinner.getSelectedItem());
                 if (layerName.equals(getString(R.string.cafe))) {
                     placeType = "cafe";
@@ -347,7 +356,7 @@ class MapActivity extends AppCompatActivity implements
                 } else if (layerName.equals(getString(R.string.restaurant))) {
                     placeType = "restaurant";
                 }
-                String url = getPlaceUrl(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), placeType);
+                String url = getPlaceUrl(loc.getLatitude(), loc.getLongitude(), placeType);
                 showNearbyPlaces(url);
             }
         });
@@ -390,22 +399,33 @@ class MapActivity extends AppCompatActivity implements
     void setupDirection() {
         if (userMarker != null) {
             Log.i(TAG, "setupDirection: " + userMarker.getPosition());
+            try {
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
+                                                                            getDirectionUrl(userlatlng), null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public
+                    void onResponse(JSONObject response) {
+                        try {
+                            GetByVolley.getDirection(response, mMap, markerToLocation(userMarker));// give destination
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public
+                    void onErrorResponse(VolleyError error) {
 
-            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
-                                                                        getDirectionUrl(userlatlng), null, new Response.Listener<JSONObject>() {
-                @Override
-                public
-                void onResponse(JSONObject response) {
-                    GetByVolley.getDirection(response, mMap, markerToLocation(userMarker));// give destination
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public
-                void onErrorResponse(VolleyError error) {
+                    }
+                });
+                VolleySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(MapActivity.this, "Sorry..! \nDirection is Unavailable to this Location.", Toast.LENGTH_LONG).show();
 
-                }
-            });
-            VolleySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+
+            }
+
         } else {
             Toast.makeText(MapActivity.this, "Please choose a destination", Toast.LENGTH_SHORT).show();
         }
@@ -579,6 +599,7 @@ class MapActivity extends AppCompatActivity implements
     void onMapLongClick(LatLng latLng) {
         mMap.clear();
         userMarker = null;
+        userlatlng = latLng;
         markOnMap(latLng);
         Log.i(TAG, "onMapLongClick: userMarker:    " + userMarker.getPosition());
     }
@@ -600,7 +621,7 @@ class MapActivity extends AppCompatActivity implements
 
     private
     LatLng markerToLatLng(Marker marker) {
-        LatLng tmp = new LatLng(marker.getPosition().latitude,marker.getPosition().longitude);
+        LatLng tmp = new LatLng(marker.getPosition().latitude, marker.getPosition().longitude);
         return tmp;
     }
 
@@ -659,14 +680,15 @@ class MapActivity extends AppCompatActivity implements
             Toast.makeText(this, "There is no Favourites in the database. Start adding now", Toast.LENGTH_LONG).show();
         }
 
-        favView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public
-            void onClick(View v) {
-                Toast.makeText(MapActivity.this, "sdd ", Toast.LENGTH_LONG).show();
-            }
-        });
+//        favView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public
+//            void onClick(View v) {
+//                Toast.makeText(MapActivity.this, "sdd ", Toast.LENGTH_LONG).show();
+//            }
+//        });
         dialog.show();
+        adapterListener();
     }
 
     private
@@ -678,13 +700,27 @@ class MapActivity extends AppCompatActivity implements
         return location;
     }
 
-    @Override
-    public
-    void OnItemClick(int position) {
-        //Todo Do some action here
-        Toast.makeText(MapActivity.this, "id: " + position, Toast.LENGTH_LONG).show();
-        Log.i(TAG, "onItemClick: id " + position);
-        dialog.dismiss();
+    private
+    void adapterListener() {
+        mAdapter.setClickListener(new recyclerAdapter.CustomAdapterClickListener() {
+            @Override
+            public
+            void OnItemClick(View v, int position) {
+
+            }
+
+            @Override
+            public
+            void OnItemClick(int elementId) {
+                //Todo Do some action here
+                Toast.makeText(MapActivity.this, "id: " + elementId, Toast.LENGTH_LONG).show();
+                Log.i(TAG, "onItemClick: id " + elementId);
+                showDelete();
+                dialog.dismiss();
+            }
+        });
+
+
     }
 
     private
@@ -701,26 +737,39 @@ class MapActivity extends AppCompatActivity implements
             public
             void onClick(View view) {
                 if (userMarker != null) {
-                    String address = getAddress(new LatLng(userMarker.getPosition().latitude, userMarker.getPosition().longitude));
-                    double lat     = markerToLocation(userMarker).getLatitude();
-                    double lng     = markerToLocation(userMarker).getLongitude();
+                    String address = getAddress(userlatlng);
+                    double lat     = markerToLatLng(userMarker).latitude;
+                    double lng     = markerToLatLng(userMarker).longitude;
                     String date    = getDate();
 
-                    Log.i(TAG, "onClick: ");
-                    Favourites newFav = new Favourites("newaddress",
-                                                       "date",
-                                                       32.23423,
-                                                       77.2424242,
+                    Favourites newFav = new Favourites(address,
+                                                       date,
+                                                       lat,
+                                                       lng,
                                                        false);
-                    Log.i(TAG, "onClick: New Fav added");
-                    mDatabase.addFavourites(newFav);
-                }else {
-                    Toast.makeText(MapActivity.this,"Please select a point to add." , Toast.LENGTH_LONG).show();
 
+                    dbHelper db = new dbHelper(MapActivity.this);
+                    db.addFavourites(newFav);
+                    Log.i(TAG, "onClick: New Fav added");
+                    Toast.makeText(MapActivity.this, "New place added", Toast.LENGTH_SHORT).show();
+                    dialog.show();
+                } else {
+                    Toast.makeText(MapActivity.this, "Please select a point to add.", Toast.LENGTH_LONG).show();
                 }
             }
         });
     }
 
+    private
+    void hideDelete() {
+        btnDel.setVisibility(View.GONE);
+        btnAdd.setText("Add Place");
+    }
 
+    private
+    void showDelete() {
+        btnDel.setVisibility(View.VISIBLE);
+        btnAdd.setText("Update Place");
+
+    }
 }
