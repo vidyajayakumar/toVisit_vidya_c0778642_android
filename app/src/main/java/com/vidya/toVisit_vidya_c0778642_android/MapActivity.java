@@ -189,6 +189,8 @@ class MapActivity extends AppCompatActivity implements
             @Override
             public
             void onTextChanged(CharSequence s, int start, int before, int count) {
+                mMap.clear();
+                hideDelete();
                 FindAutocompletePredictionsRequest predictionsRequest = FindAutocompletePredictionsRequest.builder()
                         .setTypeFilter(TypeFilter.ADDRESS)
                         .setSessionToken(token)
@@ -260,6 +262,7 @@ class MapActivity extends AppCompatActivity implements
                         LatLng latLngOfPlace = place.getLatLng();
                         if (latLngOfPlace != null) {
                             userMarker = null;
+                            userlatlng=latLngOfPlace;
                             markOnMap(latLngOfPlace);
                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLngOfPlace, DEFAULT_ZOOM));
                         }
