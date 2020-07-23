@@ -14,6 +14,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -122,6 +123,7 @@ class MapActivity extends AppCompatActivity implements
     private Location location;
     private Button btnDel;
     private int update;
+    private RecyclerView favView;
 
     @Override
     protected
@@ -262,7 +264,7 @@ class MapActivity extends AppCompatActivity implements
                         LatLng latLngOfPlace = place.getLatLng();
                         if (latLngOfPlace != null) {
                             userMarker = null;
-                            userlatlng=latLngOfPlace;
+                            userlatlng = latLngOfPlace;
                             markOnMap(latLngOfPlace);
                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLngOfPlace, DEFAULT_ZOOM));
                         }
@@ -672,7 +674,7 @@ class MapActivity extends AppCompatActivity implements
             }
         });
 
-        RecyclerView        favView             = dialog.findViewById(R.id.recycler);
+        favView = dialog.findViewById(R.id.recycler);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         favView.setLayoutManager(linearLayoutManager);
         favView.setHasFixedSize(true);
@@ -684,7 +686,10 @@ class MapActivity extends AppCompatActivity implements
             favView.setVisibility(View.VISIBLE);
             mAdapter = new recyclerAdapter(this, allFav, null);
             favView.setAdapter(mAdapter);
+            hideDelete();
+            userMarker=null;
             adapterListener();
+            setupSwipeToDelete();
         } else {
             favView.setVisibility(View.GONE);
             Toast.makeText(this, "There is no Favourites in the database. Start adding now", Toast.LENGTH_LONG).show();
@@ -729,6 +734,13 @@ class MapActivity extends AppCompatActivity implements
                 Log.i(TAG, "onItemClick: id " + id + " Latlng " + new LatLng(lat, lng));
             }
         });
+    }
+
+    private
+    void setupSwipeToDelete() {
+        ItemTouchHelper.Callback callback = new SwipeToDelete(mAdapter);
+        ItemTouchHelper          helper   = new ItemTouchHelper(callback);
+        helper.attachToRecyclerView(favView);
     }
 
     private

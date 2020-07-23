@@ -11,6 +11,7 @@ import android.widget.CompoundButton;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.vidya.toVisit_vidya_c0778642_android.networking.Favourites;
 
@@ -78,6 +79,15 @@ class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.MyViewHolder>
     public
     Filter getFilter() {
         return null;
+    }
+
+    public
+    void deleteFav(int position) {
+        mDatabase.deleteFavourite(listFavourites.get(position).get_id());
+        listFavourites.remove(position);
+        this.notifyItemRemoved(position);
+        this.notifyItemRangeChanged(position, listFavourites.size());
+        Toast.makeText(context, "Favourite Deleted", Toast.LENGTH_LONG).show();
     }
 
     public
