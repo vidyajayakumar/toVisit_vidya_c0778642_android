@@ -8,30 +8,12 @@
     tools:context=".MapActivity"
     tools:showIn="@layout/activity_map">
 
-
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!--    <com.skyfishjy.library.RippleBackground-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="match_parent"-->
-    <!--        android:id="@+id/ripple_bg"-->
-    <!--        app:rb_color="#0099CC"-->
-    <!--        app:rb_radius="32dp"-->
-    <!--        app:rb_rippleAmount="4"-->
-    <!--        app:rb_duration="3000"-->
-    <!--        app:rb_scale="6">-->
-
-    <!--        <ImageView-->
-    <!--            android:layout_width="wrap_content"-->
-    <!--            android:layout_height="wrap_content"-->
-    <!--            android:layout_centerInParent="true"-->
-    <!--            android:translationY="-18dp"/>-->
-    <!--            android:src="@drawable/ic_placeholder"/>-->
-    <!--    </com.skyfishjy.library.RippleBackground>-->
     <com.mancj.materialsearchbar.MaterialSearchBar
         android:id="@+id/searchBar"
         style="@style/MaterialSearchBarLight"
@@ -63,7 +45,7 @@
             android:padding="5dp"
             android:text="Favoutites"
             android:textColor="#FFF"
-            android:textSize="12sp"/>
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/add_fav"
@@ -74,13 +56,13 @@
             android:padding="5dp"
             android:text="Add to Favoutites"
             android:textColor="#FFF"
-            android:textSize="12sp"/>
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/del_fav"
-            android:layout_below="@+id/add_fav"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_below="@+id/add_fav"
             android:background="#F00"
             android:padding="5dp"
             android:text="Delete"
@@ -160,6 +142,5 @@
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
-
 
 </RelativeLayout>
